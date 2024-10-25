@@ -43,18 +43,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Modification d'un produit
     if ($action === 'modifier') {
         try {
+            $produit_id = $_POST['id_produit'];
             $sql = "UPDATE produits SET nom = :nom, description = :description, prix = :prix, 
                     categorie_id = :categorie_id, image_url = :image_url, quantite = :quantite 
                     WHERE id_produit = :id_produit";
             $stmt = $conn->prepare($sql);
             $stmt->execute([
-                ':nom' => $_POST['nom'],
-                ':description' => $_POST['description'],
-                ':prix' => $_POST['prix'],
-                ':categorie_id' => $_POST['categorie_id'],
-                ':image_url' => $_POST['image_url'],
-                ':quantite' => $_POST['quantite'],
-                ':id_produit' => $_POST['id_produit']
+                ':nom' => $_POST["nom_$produit_id"],
+                ':description' => $_POST["description_$produit_id"],
+                ':prix' => $_POST["prix_$produit_id"],
+                ':categorie_id' => $_POST["categorie_id_$produit_id"],
+                ':image_url' => $_POST["image_url_$produit_id"],
+                ':quantite' => $_POST["quantite_$produit_id"],
+                ':id_produit' => $produit_id
             ]);
             header("Location: admin_dashboard.php");
             exit;
@@ -64,11 +65,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Suppression d'un produit
-    if ($action === 'supprimer') {
+    if (strpos($action, 'supprimer_') === 0) {
         try {
+            $produit_id = str_replace('supprimer_', '', $action);
             $sql = "DELETE FROM produits WHERE id_produit = :id_produit";
             $stmt = $conn->prepare($sql);
-            $stmt->execute([':id_produit' => $_POST['id_produit']]);
+            $stmt->execute([':id_produit' => $produit_id]);
             header("Location: admin_dashboard.php");
             exit;
         } catch (PDOException $e) {
@@ -105,86 +107,113 @@ try {
     </nav>
 </header>
 
-<section>
+<section class="dashboard-section">
     <h2>Gérer les produits</h2>
 
-    <!-- Formulaire d'ajout de produit -->
-    <div class="form-section">
+    <!-- Formulaire d'ajout de produit amélioré -->
+    <div class="form-container">
         <h3>Ajouter un produit</h3>
-        <form method="POST" action="admin_dashboard.php">
+        <form method="POST" action="admin_dashboard.php" class="product-form">
             <input type="hidden" name="action" value="ajouter">
-            <label for="nom">Nom :</label>
-            <input type="text" id="nom" name="nom" required>
 
-            <label for="description">Description :</label>
-            <textarea id="description" name="description" required></textarea>
+            <div class="form-group">
+                <label for="nom">Nom :</label>
+                <input type="text" id="nom" name="nom" required>
+            </div>
 
-            <label for="prix">Prix :</label>
-            <input type="number" id="prix" name="prix" step="0.01" required>
+            <div class="form-group">
+                <label for="description">Description :</label>
+                <textarea id="description" name="description" required></textarea>
+            </div>
 
-            <label for="categorie_id">Catégorie :</label>
-            <input type="number" id="categorie_id" name="categorie_id" required>
+            <div class="form-group">
+                <label for="prix">Prix :</label>
+                <input type="number" id="prix" name="prix" step="0.01" required>
+            </div>
 
-            <label for="image_url">URL de l'image :</label>
-            <input type="text" id="image_url" name="image_url" required>
+            <div class="form-group">
+                <label for="categorie_id">Catégorie :</label>
+                <input type="number" id="categorie_id" name="categorie_id" required>
+            </div>
 
-            <label for="quantite">Quantité :</label>
-            <input type="number" id="quantite" name="quantite" required>
+            <div class="form-group">
+                <label for="image_url">URL de l'image :</label>
+                <input type="text" id="image_url" name="image_url" required>
+            </div>
 
-            <button type="submit">Ajouter</button>
+            <div class="form-group">
+                <label for="quantite">Quantité :</label>
+                <input type="number" id="quantite" name="quantite" required>
+            </div>
+
+            <button type="submit" class="btn">Ajouter le produit</button>
         </form>
     </div>
 
-    <!-- Liste des produits avec formulaires de modification et de suppression -->
+    <!-- Liste des produits avec options de modification et de suppression -->
     <h3>Liste des produits</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Nom</th>
-                <th>Description</th>
-                <th>Prix</th>
-                <th>Catégorie</th>
-                <th>Quantité</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($produits as $produit): ?>
-            <tr>
-                <td><?php echo htmlspecialchars($produit['nom']); ?></td>
-                <td><?php echo htmlspecialchars($produit['description']); ?></td>
-                <td><?php echo htmlspecialchars($produit['prix']); ?> €</td>
-                <td><?php echo htmlspecialchars($produit['categorie_id']); ?></td>
-                <td><?php echo htmlspecialchars($produit['quantite']); ?></td>
-                <td>
-                    <!-- Formulaire de modification de produit -->
-                    <div class="product-action">
-                        <form method="POST" action="admin_dashboard.php" class="product-form">
-                            <input type="hidden" name="action" value="modifier">
-                            <input type="hidden" name="id_produit" value="<?php echo $produit['id_produit']; ?>">
-                            <input type="text" name="nom" value="<?php echo htmlspecialchars($produit['nom']); ?>" required>
-                            <textarea name="description" required><?php echo htmlspecialchars($produit['description']); ?></textarea>
-                            <input type="number" name="prix" step="0.01" value="<?php echo htmlspecialchars($produit['prix']); ?>" required>
-                            <input type="number" name="categorie_id" value="<?php echo htmlspecialchars($produit['categorie_id']); ?>" required>
-                            <input type="text" name="image_url" value="<?php echo htmlspecialchars($produit['image_url']); ?>" required>
-                            <input type="number" name="quantite" value="<?php echo htmlspecialchars($produit['quantite']); ?>" required>
-                            <button type="submit">Modifier</button>
-                        </form>
-                    </div>
-
-                    <!-- Formulaire de suppression de produit -->
-                    <div class="product-action">
-                        <form method="POST" action="admin_dashboard.php" class="product-form">
-                            <input type="hidden" name="action" value="supprimer">
-                            <input type="hidden" name="id_produit" value="<?php echo $produit['id_produit']; ?>">
-                            <button type="submit" class="delete-button">Supprimer</button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+    <form method="POST" action="admin_dashboard.php">
+        <input type="hidden" name="action" value="modifier">
+        <table class="product-table">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Description</th>
+                    <th>Prix</th>
+                    <th>Catégorie</th>
+                    <th>Quantité</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($produits as $produit): ?>
+                <tr>
+                    <td><input type="text" name="nom_<?php echo $produit['id_produit']; ?>" value="<?php echo htmlspecialchars($produit['nom']); ?>"></td>
+                    <td><textarea name="description_<?php echo $produit['id_produit']; ?>"><?php echo htmlspecialchars($produit['description']); ?></textarea></td>
+                    <td><input type="number" step="0.01" name="prix_<?php echo $produit['id_produit']; ?>" value="<?php echo htmlspecialchars($produit['prix']); ?>"></td>
+                    <td><input type="number" name="categorie_id_<?php echo $produit['id_produit']; ?>" value="<?php echo htmlspecialchars($produit['categorie_id']); ?>"></td>
+                    <td><input type="number" name="quantite_<?php echo $produit['id_produit']; ?>" value="<?php echo htmlspecialchars($produit['quantite']); ?>"></td>
+                    <td>
+                        <button type="submit" name="id_produit" value="<?php echo $produit['id_produit']; ?>" class="btn-modify">Modifier</button>
+                        <button type="submit" name="action" value="supprimer_<?php echo $produit['id_produit']; ?>" class="btn-delete" 
+                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce produit ?');">Supprimer</button>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </form>
 </section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let formModified = false;
+        
+        // Détecte les modifications dans les champs du formulaire
+        const inputs = document.querySelectorAll("input[type='text'], input[type='number'], textarea");
+        inputs.forEach(input => {
+            input.addEventListener("input", () => {
+                formModified = true;
+            });
+        });
+
+        // Message d'avertissement avant de quitter la page
+        window.addEventListener("beforeunload", (event) => {
+            if (formModified) {
+                event.preventDefault();
+                event.returnValue = "Vous avez des modifications non enregistrées. Cliquez sur 'Modifier' pour enregistrer vos changements.";
+            }
+        });
+
+        // Réinitialiser l'état de modification après l'envoi du formulaire
+        const forms = document.querySelectorAll("form");
+        forms.forEach(form => {
+            form.addEventListener("submit", () => {
+                formModified = false; // Réinitialiser après soumission
+            });
+        });
+    });
+</script>
+
 </body>
 </html>
