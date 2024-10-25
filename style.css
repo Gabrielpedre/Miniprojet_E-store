@@ -864,6 +864,61 @@ body {
     background-color: #1a1a2e;
 }
 
+.inscription-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f4f4f9;
+}
+
+.form-container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+}
+
+.inscription-form label {
+    font-weight: bold;
+    display: block;
+    margin: 10px 0 5px;
+    color: #333;
+}
+
+.inscription-form input[type="text"],
+.inscription-form input[type="email"],
+.inscription-form input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.inscription-form .btn {
+    background-color: #3366ff;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
+}
+
+.inscription-form .btn:hover {
+    background-color: #1a1a2e;
+}
+
+.message {
+    color: red;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
 
 
 

@@ -36,6 +36,7 @@ $produits = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <a href="deconnexion.php">Déconnexion</a>
             <?php else: ?>
                 <a href="connexion.php">Connexion</a>
+                <a href="inscription.php">Inscription</a>
             <?php endif; ?>
         </nav>
     </header>
