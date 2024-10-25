@@ -11,6 +11,8 @@ try {
 
 // Gestion de la connexion
 $message = '';
+$redirection_inscription = false; // Variable pour la redirection avec popup
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email']);
     $mot_de_passe = trim($_POST['mot_de_passe']);
@@ -21,7 +23,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $utilisateur = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($utilisateur && password_verify($mot_de_passe, $utilisateur['mot_de_passe'])) {
-        // Le mot de passe est correct
         $_SESSION['utilisateur'] = [
             'id' => $utilisateur['id'],
             'nom' => $utilisateur['nom'],
@@ -38,6 +39,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     } else {
         $message = "Email ou mot de passe incorrect.";
+
+        // Définir une redirection avec popup pour inscription si l'utilisateur n'existe pas
+        if (!$utilisateur) {
+            $redirection_inscription = true;
+        }
     }
 }
 ?>
@@ -49,6 +55,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Connexion</title>
     <link rel="stylesheet" href="style.css">
+    <script>
+        // Vérifier si une redirection vers inscription est nécessaire
+        <?php if ($redirection_inscription): ?>
+            alert("Identifiants incorrects. Veuillez vous inscrire.");
+            window.location.href = 'inscription.php';
+        <?php endif; ?>
+    </script>
 </head>
 <body>
 <header>
@@ -65,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <section class="connexion-page">
     <div class="form-container">
         <h2>Connexion</h2>
-        <?php if (!empty($message)): ?>
+        <?php if (!empty($message) && !$redirection_inscription): ?>
             <p class="error-message"><?php echo htmlspecialchars($message); ?></p>
         <?php endif; ?>
         <form method="POST" action="connexion.php" class="login-form">

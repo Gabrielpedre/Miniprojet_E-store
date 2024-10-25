@@ -6,32 +6,22 @@ $pexels_api_key = 'SjrYYmdBdPTPC0dNkOl424dcozrDGmNEiZr3XapFDRv3sMyspFpUioL0';
 
 // Fonction pour récupérer une image à partir de l'API Pexels
 function get_pexels_image($nom_produit, $api_key) {
-    $query = urlencode($nom_produit . ' technology'); // Ajout du contexte "technology"
+    $query = urlencode($nom_produit . ' technology');
     $url = "https://api.pexels.com/v1/search?query={$query}&per_page=1";
 
-    // Configuration de l'en-tête HTTP pour l'API Pexels
     $options = [
         "http" => [
             "header" => "Authorization: {$api_key}\r\n"
         ]
     ];
     $context = stream_context_create($options);
-    
-    // Effectuer une requête HTTP GET vers l'API Pexels
     $response = @file_get_contents($url, false, $context);
     if ($response === FALSE) {
-        // Retourner une image par défaut en cas d'erreur
         return 'https://via.placeholder.com/300x200?text=Image+non+disponible';
     }
 
     $data = json_decode($response, true);
-
-    // Si une image est trouvée, retourner l'URL
-    if (!empty($data['photos'][0]['src']['medium'])) {
-        return $data['photos'][0]['src']['medium'];
-    } else {
-        return 'https://via.placeholder.com/300x200?text=Image+non+disponible';
-    }
+    return !empty($data['photos'][0]['src']['medium']) ? $data['photos'][0]['src']['medium'] : 'https://via.placeholder.com/300x200?text=Image+non+disponible';
 }
 
 try {
@@ -41,13 +31,13 @@ try {
     die("Erreur de connexion à la base de données : " . $e->getMessage());
 }
 
-// Récupérer toutes les catégories pour les afficher en haut de la page
+// Récupérer toutes les catégories
 $sql = "SELECT * FROM categories";
 $stmt = $conn->prepare($sql);
 $stmt->execute();
 $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Récupérer les filtres de recherche et de catégorie si définis
+// Récupérer les filtres de recherche et de catégorie
 $search = isset($_GET['search']) ? '%' . $_GET['search'] . '%' : null;
 $categorie_id = isset($_GET['categorie']) ? $_GET['categorie'] : null;
 
@@ -97,7 +87,6 @@ $produits = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </header>
 
 <section>
-    <!-- Menu de catégories en boutons -->
     <div class="categories-buttons">
         <form method="GET" action="produits.php">
             <button type="submit" name="categorie" value="" <?php echo !$categorie_id ? 'class="active"' : ''; ?>>Toutes</button>
@@ -109,7 +98,6 @@ $produits = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </form>
     </div>
 
-    <!-- Barre de recherche qui se recharge après chaque frappe -->
     <form method="GET" action="produits.php" style="margin-bottom: 20px;">
         <?php if ($categorie_id): ?>
             <input type="hidden" name="categorie" value="<?php echo htmlspecialchars($categorie_id); ?>">
@@ -123,7 +111,6 @@ $produits = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <?php foreach ($produits as $produit): ?>
                 <div class="produit">
                     <?php 
-                    // Utiliser la fonction pour obtenir une image via l'API Pexels
                     $image_url = get_pexels_image($produit['nom'], $pexels_api_key);
                     ?>
                     <img src="<?php echo $image_url; ?>" alt="<?php echo $produit['nom']; ?>">

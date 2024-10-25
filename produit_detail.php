@@ -1,19 +1,60 @@
 <?php
 session_start();
 
-try {
-    $conn = new PDO("mysql:host=localhost;dbname=estore", "gabriel", "gabriel");
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Erreur de connexion à la base de données : " . $e->getMessage());
+if (!isset($_SESSION['utilisateur'])) {
+    echo "<script>
+            alert('Veuillez vous connecter ou vous inscrire pour accéder aux détails du produit.');
+            window.location.href = 'connexion.php';
+          </script>";
+    exit;
 }
 
-$produit_id = $_GET['id'];
-$sql = "SELECT * FROM produits WHERE id_produit = :produit_id";
-$stmt = $conn->prepare($sql);
-$stmt->bindParam(':produit_id', $produit_id);
-$stmt->execute();
-$produit = $stmt->fetch(PDO::FETCH_ASSOC);
+try {
+    $conn = new PDO("mysql:host=localhost;dbname=estore", "root", "");
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    if (isset($_GET['id'])) {
+        $id = (int)$_GET['id'];
+        $stmt = $conn->prepare("SELECT * FROM produits WHERE id_produit = :id");
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $produit = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$produit) {
+            echo "Produit non trouvé.";
+            exit;
+        }
+    } else {
+        echo "Produit non trouvé.";
+        exit;
+    }
+
+    // Gestion de l'ajout au panier
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $quantite = 1;
+
+        if (!isset($_SESSION['panier'])) {
+            $_SESSION['panier'] = [];
+        }
+
+        $dejaDansPanier = false;
+        foreach ($_SESSION['panier'] as &$item) {
+            if ($item['id'] === $id) {
+                $item['quantite'] += $quantite;
+                $dejaDansPanier = true;
+                break;
+            }
+        }
+
+        if (!$dejaDansPanier) {
+            $_SESSION['panier'][] = ['id' => $id, 'quantite' => $quantite];
+        }
+
+        echo "<script>alert('Produit ajouté au panier !');</script>";
+    }
+} catch (PDOException $e) {
+    die("Erreur : " . $e->getMessage());
+}
 ?>
 
 <!DOCTYPE html>
@@ -21,44 +62,28 @@ $produit = $stmt->fetch(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $produit['nom']; ?> - Détails</title>
+    <title>Détails du produit</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header>
-    <h1><?php echo $produit['nom']; ?></h1>
+    <h1>Détails du produit</h1>
     <nav>
         <a href="index.php">Accueil</a>
-        <a href="panier.php">Mon panier</a>
-        <?php if (isset($_SESSION['utilisateur'])): ?>
-            <a href="deconnexion.php">Déconnexion</a>
-        <?php else: ?>
-            <a href="connexion.php">Connexion</a>
-        <?php endif; ?>
+        <a href="produits.php">Produits</a>
+        <a href="panier.php">Panier</a>
+        <a href="deconnexion.php">Déconnexion</a>
     </nav>
 </header>
-<section>
-    <img src="<?php echo $produit['image_url']; ?>" alt="<?php echo $produit['nom']; ?>">
-    <h3>Prix : <?php echo $produit['prix']; ?> €</h3>
-    <p><?php echo $produit['description']; ?></p>
-    <form>
-        <label for="quantite">Quantité :</label>
-        <input type="number" id="quantite" name="quantite" value="1" min="1">
-        <button type="button" onclick="ajouterAuPanier(<?php echo $produit['id_produit']; ?>, '<?php echo $produit['nom']; ?>', <?php echo $produit['prix']; ?>)">Ajouter au panier</button>
+
+<section class="produit-detail">
+    <h2><?php echo htmlspecialchars($produit['nom']); ?></h2>
+    <p>Description : <?php echo htmlspecialchars($produit['description']); ?></p>
+    <p>Prix : <?php echo htmlspecialchars($produit['prix']); ?> €</p>
+    <form method="post">
+        <button type="submit">Ajouter au panier</button>
     </form>
 </section>
-<footer>
-    <p>&copy; 2024 E-Store</p>
-</footer>
-<div class="signature">E-Store, powered by Excellence</div>
-<script>
-    function ajouterAuPanier(id, nom, prix) {
-        const quantite = document.getElementById('quantite').value;
-        let panier = JSON.parse(localStorage.getItem('panier')) || [];
-        panier.push({id: id, nom: nom, prix: prix, quantite: parseInt(quantite)});
-        localStorage.setItem('panier', JSON.stringify(panier));
-        alert('Produit ajouté au panier !');
-    }
-</script>
+
 </body>
 </html>
